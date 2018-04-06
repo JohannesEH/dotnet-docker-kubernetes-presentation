@@ -8,7 +8,7 @@ This guide can be found on GitHub: https://github.com/JohannesEH/dotnet-docker-k
 
 To follow this guide you have to install these tools:
 
-* [VS Code](https://code.visualstudio.com/)
+* [VS Code](https://code.visualstudio.com/) (optional but recommended)
 * [.Net Core SDK](https://www.microsoft.com/net/learn/get-started/windows)
 * [Docker for Windows](https://www.docker.com/docker-windows)
 * [Minikube](https://github.com/kubernetes/minikube)
@@ -81,14 +81,48 @@ That's it for the dotnet core part. Not much, I know, but enough for us to have 
 
 ## Docker (https://docs.docker.com/engine/docker-overview/ & https://hub.docker.com/)
 
-Docker basics DEMO 🤞🔥
+Docker intro, concepts and CLI (`pull`, `push`, `prune`, `run`, `build`) DEMO 🤞🔥
+
+Example docker run command: `docker run --rm -it ubuntu /bin/bash`
 
 ### Setting up a Dockerfile for the console app
 
+First well dockerize the console app to do this well need to create an empty file called "Dockerfile" in the console-app dir. Copy-paste the following code into the file:
 
+```dockerfile
+# Build restore dependencies and build the app
+FROM microsoft/dotnet:2.0-sdk AS build
+WORKDIR /src
+COPY *.csproj .
+RUN dotnet restore
+COPY . .
+RUN dotnet build -c Release
+
+# Publish the app based on the build step
+FROM build as publish
+RUN dotnet publish -c Release -o /app
+
+# Run tests
+# FROM publish AS test
+# RUN dotnet test <some test project>
+
+# Package the published code with the dotnet runtime image
+FROM microsoft/dotnet:2.0-runtime AS final
+WORKDIR /app
+COPY --from=publish /app .
+ENTRYPOINT ["dotnet", "console-app.dll"]
+```
+
+After creating the dockerfile build using:
+
+```shell
+docker build console-app -t console-app
+```
+
+### Setting up a Dockerfile for the web app
 
 ## Kubernetes (https://kubernetes.io/docs/concepts/)
 
-K8s basics DEMO 🤞🤞🔥🔥
+K8s intro, concepts and dashboard DEMO 🤞🤞🔥🔥
 
 ### Setting up & running minikube
