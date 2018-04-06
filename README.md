@@ -79,9 +79,9 @@ cd ..
 
 That's it for the dotnet core part. Not much, I know, but enough for us to have something to build and run in docker and kubernetes.
 
-## Docker (https://docs.docker.com/engine/docker-overview/ & https://hub.docker.com/)
+## Docker Intro (https://docs.docker.com/engine/docker-overview/ & https://hub.docker.com/)
 
-Docker intro, concepts and CLI (`pull`, `push`, `prune`, `run`, `build`) DEMO 🤞🔥
+Docker concepts and CLI (`pull`, `push`, `prune`, `run`, `build`) DEMO 🤞🔥
 
 Example docker run command: `docker run --rm -it ubuntu /bin/bash`
 
@@ -90,7 +90,7 @@ Example docker run command: `docker run --rm -it ubuntu /bin/bash`
 First well dockerize the console app to do this well need to create an empty file called "Dockerfile" in the console-app dir. Copy-paste the following code into the file:
 
 ```dockerfile
-# Build restore dependencies and build the app
+# Restore dependencies and build the app
 FROM microsoft/dotnet:2.0-sdk AS build
 WORKDIR /src
 COPY *.csproj .
@@ -132,11 +132,85 @@ This command should output `Hello World!` just as the `dotnet run` command did e
 Next we'll setup a Dockerfile for the web app. Again create an empty Dockerfile in the web-app directory and fill in the following code:
 
 ```dockerfile
-FROM microsoft/aspnetcore:
+# Restore dependencies and build the app
+FROM microsoft/aspnetcore-build:2.0 AS build
+WORKDIR /src
+COPY *.csproj .
+COPY package.json .
+RUN dotnet restore
+RUN npm install
+COPY . .
+RUN dotnet build -c Release
+
+# Publish the app based on the build step
+FROM build as publish
+RUN dotnet publish -c Release -o /app
+
+# Run tests
+# FROM publish AS test
+# RUN dotnet test <some test project>
+
+# Package the published code with the dotnet runtime image
+FROM microsoft/aspnetcore:2.0 AS final
+WORKDIR /app
+COPY --from=publish /app .
+EXPOSE 80
+ENTRYPOINT ["dotnet", "web-app.dll"]
 ```
 
-## Kubernetes (https://kubernetes.io/docs/concepts/)
+After creating the dockerfile build using:
 
-K8s intro, concepts and dashboard DEMO 🤞🤞🔥🔥
+```shell
+docker build web-app -t web-app
+```
+
+If successful this command will output a docker image tagged web-app:latest to your local docker repository. To run the image use the following command:
+
+```shell
+docker run --rm -it -p 80:80 web-app
+```
+
+This will start an interactive session just like running `dotnet run` from the console. Now you can visit the app on the exposed and mapped port 80. If you want to run the web app in the background, and keep the docker container around for later use, you can run the following command:
+
+```shell
+docker run --name web-app -d -p 80:80 web-app
+```
+
+So now we have two working docker images lets setup kubernetes and configure the apps to run in the cluster.
+
+## Kubernetes
 
 ### Setting up & running minikube
+
+First of all we need to get the cluster up and running. We need minikube to run in hyper-v, which is a little tricky. So first you should follow [this guide](https://medium.com/@JockDaRock/minikube-on-windows-10-with-hyper-v-6ef0f4dc158c) to configure hyper-v correctly, and then finally you should start start minikube with this command from an elevated prompt:
+
+```shell
+minikube start --vm-driver hyperv --hyperv-virtual-switch "Primary Virtual Switch"
+```
+
+### Kubernetes Intro (https://kubernetes.io/docs/concepts/)
+
+K8s concepts, CLI and dashboard DEMO 🤞🤞🔥🔥
+
+### Setting up the console app as a cron job
+
+Let's pretend our console app is job we need to run every minute. Create a new file called console-app-job.yaml and copy/paste this content into the file:
+
+```yaml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: console-app-job
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: console-app-container
+            image: console-app
+          restartPolicy: OnFailure
+```
+
+### Setting up the web-app as a external service
