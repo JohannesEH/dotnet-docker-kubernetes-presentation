@@ -119,7 +119,21 @@ After creating the dockerfile build using:
 docker build console-app -t console-app
 ```
 
+If successful this command will output a docker image tagged console-app:latest to your local docker repository. To run the image use the following command:
+
+```shell
+docker run --rm -it console-app
+```
+
+This command should output `Hello World!` just as the `dotnet run` command did earlier.
+
 ### Setting up a Dockerfile for the web app
+
+Next we'll setup a Dockerfile for the web app. Again create an empty Dockerfile in the web-app directory and fill in the following code:
+
+```dockerfile
+FROM microsoft/aspnetcore:
+```
 
 ## Kubernetes (https://kubernetes.io/docs/concepts/)
 
