@@ -1,5 +1,7 @@
 [Pp]ublish
 
+launchSettings.json
+
 *.swp
 *.*~
 project.lock.json
