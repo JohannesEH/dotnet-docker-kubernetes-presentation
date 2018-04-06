@@ -1,4 +1,4 @@
-# .NET (Core) Sparringsgruppe d. 9/4/2018 - Intro to Dotnet Core, Docker & Kubernetes
+# .NET Group Presentation - Intro to .NET Core, Docker & Kubernetes
 
 This presentation/guide is a quick introduction to dotnet core, docker and kubernetes. In this guide we'll create a couple of simple dotnet apps to run in docker containers and as jobs and services in a kuberntes cluster using minikube.
 
