@@ -176,7 +176,33 @@ This will start an interactive session just like running `dotnet run` from the c
 docker run --name web-app -d -p 80:80 web-app
 ```
 
-So now we have two working docker images lets setup kubernetes and configure the apps to run in the cluster.
+So now we have two working docker images let us publish them to dockerhub so we can run them in our kubernetes cluster.
+
+## Dockerhub
+
+This step is fairly easy. First you have to go to hub.docker.com and create an account and 2 repositories called "console-app" and "web-app". My username on dockerhub is "johanneseh" so I'll use that name in the following steps.
+
+First you need to login the docker client to dockerhub by calling:
+
+```shell
+docker login
+```
+
+After you've logged in we need to tag our local images so they know what repo they should go to when you push. So lets tag our app images:
+
+```shell
+docker tag console-app johanneseh/console-app
+docker tag web-app johanneseh/web-app
+```
+
+Now we're ready to push our images to dockerhub. The default behavior of the docker client is to push images to dockerhub if you don't choose another docker registry. So to push our images to dockerhub we simply use:
+
+```shell
+docker push johanneseh/console-app
+docker push johanneseh/web-app
+```
+
+Good. Now our images are online and ready to be used in our kubernetes cluster so lets go ahead and set that up.
 
 ## Kubernetes
 
@@ -194,23 +220,37 @@ K8s concepts, CLI and dashboard DEMO 🤞🤞🔥🔥
 
 ### Setting up the console app as a cron job
 
-Let's pretend our console app is job we need to run every minute. Create a new file called console-app-job.yaml and copy/paste this content into the file:
+Let's pretend our console app is job we need to run every minute. To do this we create a cronjob with the following command:
 
-```yaml
-apiVersion: batch/v1beta1
-kind: CronJob
-metadata:
-  name: console-app-job
-spec:
-  schedule: "*/1 * * * *"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: console-app-container
-            image: console-app
-          restartPolicy: OnFailure
+```shell
+kubectl run console-app-job --schedule="*/1 * * * *" --restart=OnFailure --image=johanneseh/console-app
 ```
 
-### Setting up the web-app as a external service
+Check that the job is running using the `minkube dashboard` command.
+
+### Setting up the web-app and expose it
+
+Now let's configure our web app to run as a service in our cluster with the following command:
+
+```shell
+kubectl run web-app --image=johanneseh/web-app --port=80 --replicas=3
+```
+
+Check that the deployment is running in the dashboard.
+
+Finally let's expose the service using a kubernetes LoadBalancer service.
+
+```shell
+kubectl expose deployment web-app --type=LoadBalancer --name=web-app-service
+```
+
+This should create the LoadBalancer and let us visit the running web app. In a normal kubernetes cluster we would get an external ip to go to or point our dns at, but in minikube this is a bit different. Fortunately minikube has a command to get the address for the service:
+
+```shell
+minikube service web-app-service
+```
+
+This should open up your browser and let you see the running web page.
+
+## We're done!
+That's it... We've created to apps, dockerized them and made the run in a kubernetes cluster.
