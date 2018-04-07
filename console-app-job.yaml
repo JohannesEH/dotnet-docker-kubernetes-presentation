@@ -10,5 +10,5 @@ spec:
         spec:
           containers:
           - name: console-app-container
-            image: console-app
+            image: johanneseh/console-app
           restartPolicy: OnFailure
