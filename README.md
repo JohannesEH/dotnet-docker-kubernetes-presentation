@@ -132,18 +132,32 @@ This command should output `Hello World!` just as the `dotnet run` command did e
 Next we'll setup a Dockerfile for the web app. Again create an empty Dockerfile in the web-app directory and fill in the following code:
 
 ```dockerfile
-# Restore dependencies and build the app
-FROM microsoft/aspnetcore-build:2.0 AS build
+#Configure build envrionment
+FROM microsoft/dotnet:2.0-sdk AS build-env
 WORKDIR /src
+
+ENV NODE_VERSION 8.11.1
+ENV NODE_DOWNLOAD_SHA 0e20787e2eda4cc31336d8327556ebc7417e8ee0a6ba0de96a09b0ec2b841f60
+
+RUN curl -SL "http://unencrypted.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz" --output nodejs.tar.gz \
+    && echo "$NODE_DOWNLOAD_SHA nodejs.tar.gz" | sha256sum -c - \
+    && tar -xzf "nodejs.tar.gz" -C /usr/local --strip-components=1 \
+    && rm nodejs.tar.gz \
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
+    && echo Node Version && node -v \
+    && echo NPM Version && npm -v
+
+# Restore dependencies and build the app
+FROM build-env AS build
+RUN npm -v
 COPY *.csproj .
-COPY package.json .
 RUN dotnet restore
+COPY package.json .
 RUN npm install
 COPY . .
 RUN dotnet build -c Release
 
-# Publish the app based on the build step
-FROM build as publish
+FROM build AS publish
 RUN dotnet publish -c Release -o /app
 
 # Run tests
@@ -167,13 +181,13 @@ docker build web-app -t web-app
 If successful this command will output a docker image tagged web-app:latest to your local docker repository. To run the image use the following command:
 
 ```shell
-docker run --rm -it -p 80:80 web-app
+docker run --rm -it -p 8080:80 web-app
 ```
 
-This will start an interactive session just like running `dotnet run` from the console. Now you can visit the app on the exposed and mapped port 80. If you want to run the web app in the background, and keep the docker container around for later use, you can run the following command:
+This will start an interactive session just like running `dotnet run` from the console. Now you can visit the app on the exposed and mapped port 80. If you want to run the web app in the background (detached mode), and keep the docker container around for later use, you can run the following command:
 
 ```shell
-docker run --name web-app -d -p 80:80 web-app
+docker run --name web-app -d -p 8080:80 web-app
 ```
 
 So now we have two working docker images let us publish them to dockerhub so we can run them in our kubernetes cluster.
