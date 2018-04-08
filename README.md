@@ -184,7 +184,8 @@ If successful this command will output a docker image tagged web-app:latest to y
 docker run --rm -it -p 8080:80 web-app
 ```
 
-This will start an interactive session just like running `dotnet run` from the console. Now you can visit the app on the exposed and mapped port 80. If you want to run the web app in the background (detached mode), and keep the docker container around for later use, you can run the following command:
+This will start an interactive session just like running `dotnet run` from the console. Now you can visit the app on the exposed port 80 mapped to port 8080 on the host machine. 
+If you want to run the web app in the background (detached mode), and keep the docker container around for later use, you can run the following command:
 
 ```shell
 docker run --name web-app -d -p 8080:80 web-app
