@@ -85,6 +85,15 @@ Docker concepts and CLI (`pull`, `push`, `prune`, `run`, `build`) DEMO 🤞🔥
 
 Example docker run command: `docker run --rm -it ubuntu /bin/bash`
 
+### .dockerignore
+
+For each app we need to specify a .dockerignore file. This file makes docker ignore certain file just like a .gitignore file does for git. This is useul as we don't want to include certain directories (obj, bin, node_modules, etc.). So copy the premade .dockerignore file from this repo into the app directories:
+
+```shell
+xcopy .dockerignore console-app
+xcopy .dockerignore web-app
+```
+
 ### Setting up a Dockerfile for the console app
 
 First well dockerize the console app to do this well need to create an empty file called "Dockerfile" in the console-app dir. Copy-paste the following code into the file:
