@@ -1,5 +1,5 @@
 # Restore dependencies and build the app
-FROM microsoft/dotnet:2.0-sdk AS build-env
+FROM microsoft/dotnet:2.1-sdk AS build-env
 WORKDIR /src
 
 #setup node
@@ -31,7 +31,7 @@ RUN dotnet publish -c Release -o /app
 # RUN dotnet test <some test project>
 
 # Package the published code with the dotnet runtime image
-FROM microsoft/aspnetcore:2.0 AS final
+FROM microsoft/aspnetcore:2.1 AS final
 WORKDIR /app
 COPY --from=publish /app .
 EXPOSE 80
